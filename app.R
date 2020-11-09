@@ -79,6 +79,7 @@ server <- function(input, output) {
 
 
     data$Departement <- gsub("\\..*","",data$Departement)
+    data$Departement = as.integer(data$Departement)
 
 
     for (i in 1:length(data$Departement)) {
@@ -91,9 +92,12 @@ server <- function(input, output) {
       #replace par NULL les departments non valides
 
       if (data$Departement[i] %in% c(1:95,971:976)==FALSE){
-        data$Departement[i]<- NA
-
-      }}
+        data$Departement[i]<- NA}
+      
+      # if (nchar(data$Departement[i])==1){
+      #   data$Departement[i] = paste(0,data$Departement[i])
+      # }
+      }
 
     # Recodage variable à choix multiple -------------------------
     ## 1 colonne pour chaque proposition de réponse, codage booléen
