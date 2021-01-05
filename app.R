@@ -1,5 +1,5 @@
 
-list.of.packages <- c("shiny", "shinydashboard", "dplyr", "leaflet", "DT", "readxl", "writexl")
+list.of.packages <- c("shiny", "shinydashboard", "dplyr", "leaflet", "DT", "readxl", "writexl", "GADMTools")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -10,10 +10,14 @@ lapply(list.of.packages, library, character.only = TRUE)
 
 ui <- dashboardPage(
   skin="yellow",
-  dashboardHeader(),
+  dashboardHeader(title = span(img(src="img/smile.png", width = 60)) ),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Nettoyage du jeu de données", tabName = "clean", icon = icon("hand-sparkles"))
+      menuItem("Nettoyage du jeu de données", tabName = "clean", icon = icon("hand-sparkles")),
+      menuItem("Filtres", tabName = "filtre", icon = icon("filter")),
+      menuItem("Analyses statistiques", tabName = "stat", icon = icon("chart-pie")),
+      menuItem("Analyses textuelles", tabName = "text", icon = icon("spell-check")),
+      menuItem("Rapport", tabName = "report", icon = icon("file-word"))
     )
   ),
   dashboardBody(
@@ -27,24 +31,61 @@ ui <- dashboardPage(
     
     tabItems(
       tabItem(tabName = "clean",
+              tags$br(),
+              img(id = "logo", src="img/happiness.png", width = 140),
+              tags$br(),
+              tags$br(),
               h1(strong("Nettoyage du jeu de données")),
-              img(id = "logo", src="img/logo.png", width = 140),
-              h3("Importez votre dataset et laissez la magie opérer ! "),
-              
-              p("Vous pouvez importer votre jeu de données au format Excel ou CSV."),
-              p("Vous pourrez ensuite le retélécharger au format que vous souhaitez."),
+              h2("Importez votre dataset et laissez la magie opérer ! "),
+              h3("Vous pouvez importer votre jeu de données au format Excel ou CSV."),
+              h4("Lorsque que le fichier sera importé il sera automatiquement nettoyé, voici une visualisation de ce jeu de données nettoyé."),
               tags$br(),
               fileInput("file", "Importer un fichier"),
               tableOutput("files"),
               dataTableOutput("clean_data"),
+              h3("Une fois le fichier importez, vous pouvez le téléchargé nettoyé au format que vous souhaitez."),
               downloadButton("dl", "Download")
-              
+      ),
       
-              
+      tabItem(tabName = "filtre",
+              h1(strong("Choose filters you want to apply on your analyzes")),
+              tags$br(),
+              radioButtons("radio", "Sexe",
+                           selected="Les deux",
+                           choiceNames = list(
+                             icon("venus-mars"), icon("venus"), icon("mars")),
+                           choiceValues = list("Les deux", "Femme", "Homme")),
+              selectInput("age", "Age", choices = c("All", "0-18", "19-30", "31-45", "46-60", "60-75", "Over 75")),
+              selectInput("department", "Department", choices=c("All", "38", "Autres"))
+      ),
+      
+      tabItem(tabName = "stat",
+              h1(strong("Analyses de questions fermées")),
+              plotOutput("pie"),
+              plotOutput("hist"),
+              plotOutput("map")
+      ),
+      
+      tabItem(tabName = "text",
+              h1(strong("Analysis of open questions")),
+              tags$br(),
+              p("- What makes you happy ?"),
+              p("- What is your life's goal ?")
+      ),
+      
+      tabItem(tabName = "report",
+              h1(strong("Download your report")),
+              tags$br(),
+              p(strong("Select analyzes you want to add in your report :")),
+              p("- Age"),
+              p("- Gender"),
+              p("- Depratment"),
+              p("- What makes you happy ?"),
+              p("- What is your life's goal ?"),
+              p("- Add all the questions"),
+            fluidPage(
+              downloadButton("downloadData","Download"))
       )
-      
-      
-      
     )))
 
 
@@ -161,20 +202,98 @@ server <- function(input, output) {
     data
     })
 
-  
-  
 output$clean_data <- renderDataTable({ dataset() })
   
-
  output$dl <- downloadHandler(
      filename = function() {
        paste('data-', Sys.Date(), '.csv', sep='')
      },
+     
      content = function(con) {
        write.csv(dataset(), con)
-     }
-
- )
+     })
+ 
+ output$downloadData <- downloadHandler(
+        filename = function() {
+        paste('data-', Sys.Date(), '.csv', sep='')
+        },
+        content = function(con) {
+        write.csv(dataset(), con)
+        })
+ 
+                          ### Analyses stats ###
+ 
+ #### camenbert
+ 
+ 
+ output$pie <- renderPlot({
+   if (input$department == "All"){
+      pie(round(prop.table(table(data$`Quel est votre sexe ?`))*100), labels=round(prop.table(table(data$`Quel est votre sexe ?`))*100),main="Proportion de répondant selon leur sexes", col=c("red","orange"))
+      legend("bottomleft", legend=c("Femme","Homme"), box.lty=0,fill=c("red", "orange"),title="Légende")
+   }else if(input$department == "Autres"){
+     pie(round(prop.table(table(data$`Quel est votre sexe ?`[data$Departement!=38]))*100), labels=round(prop.table(table(data$`Quel est votre sexe ?`))*100),main="Proportion de répondant selon leur sexes", col=c("red","orange"))
+     legend("bottomleft", legend=c("Femme","Homme"), box.lty=0,fill=c("red", "orange"),title="Légende")
+   }else{
+     pie(round(prop.table(table(data$`Quel est votre sexe ?`[data$Departement==38]))*100), labels=round(prop.table(table(data$`Quel est votre sexe ?`))*100),main="Proportion de répondant selon leur sexes", col=c("red","orange"))
+     legend("bottomleft", legend=c("Femme","Homme"), box.lty=0,fill=c("red", "orange"),title="Légende")
+   }
+   
+ })
+ 
+ #### histogramme
+ 
+ 
+ 
+ #### Map
+ 
+  output$map <- renderPlot({ 
+            france=read.csv("departements-france.csv",encoding="UTF-8")
+            code_departement=as.integer(unique(data$Departement))
+            X = unique(data$Departement)
+    
+            somme_departement=0
+            for (j in 1:length(X)){
+              for (i in 1:nrow(data)){
+                somme_departement[j]=sum(data$Departement==X[j])
+              }
+            }
+          
+            datadpt=data.frame(code_departement,somme_departement)
+            datadpt=merge(datadpt,france,by="code_departement")
+            
+            France <- gadm_sf_loadCountries("FRA", level=2 )
+            mydata <- data.frame(datadpt)
+ 
+           if (input$department == "All"){
+              choropleth(France, 
+                      data = mydata, 
+                      step=4,
+                      value = "somme_departement", 
+                      adm.join = "nom_departement",
+                      palette = "Set3",
+                      legend="Nombre de participations au questionaire",
+                      title="Participation au questionnaire")
+            }else if(input$department == "Autres"){
+              choropleth(France, 
+                         data = mydata[mydata$code_departement!=38,], 
+                         step=4,
+                         value = "somme_departement", 
+                         adm.join = "nom_departement",
+                         palette = "Set3",
+                         legend="Nombre de participations au questionaire",
+                         title="Participation au questionnaire")
+            }else{
+              choropleth(France, 
+                         data = mydata[mydata$code_departement==38,], 
+                         step=4,
+                         value = "somme_departement", 
+                         adm.join = "nom_departement",
+                         palette = "Set3",
+                         legend="Nombre de participations au questionaire",
+                         title="Participation au questionnaire")
+            }
+})
+ 
 }
 
 
