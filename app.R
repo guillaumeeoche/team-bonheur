@@ -241,8 +241,10 @@ output$clean_data <- renderDataTable({ dataset() })
  })
  
  #### histogramme
- 
- 
+
+ output$hist<-renderPlot({
+    hist(data$`Quel est votre âge ? (Ex : 30 pour 30 ans)`,xlab="Age",breaks=c(0,18, 30, 45, 60, 75,100),col="green", freq=T,include.lowest = TRUE, main="Histogramme des ages")
+})
  
  #### Map
  
