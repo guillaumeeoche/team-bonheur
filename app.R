@@ -1,5 +1,5 @@
 
-list.of.packages <- c("shiny", "shinydashboard", "dplyr", "leaflet", "DT", "readxl", "writexl", "GADMTools")
+list.of.packages <- c("shiny", "shinydashboard","wordcloud2", "dplyr", "leaflet", "DT", "readxl", "writexl", "GADMTools")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -69,8 +69,10 @@ ui <- dashboardPage(
       tabItem(tabName = "text",
               h1(strong("Analysis of open questions")),
               tags$br(),
-              p("- What makes you happy ?"),
-              p("- What is your life's goal ?")
+              h3(" - What makes you happy ?"),
+              wordcloud2Output("word_cloud"),
+              h3(" - What is your life's goal ?"),
+              plotOutput("bar")
       ),
       
       tabItem(tabName = "report",
@@ -295,6 +297,70 @@ output$clean_data <- renderDataTable({ dataset() })
                          title="Participation au questionnaire")
             }
 })
+  
+  output$word_cloud = renderWordcloud2({
+    
+    docs <- Corpus(VectorSource(data$`Qu'est ce qui vous rend heureux au quotidien ?`))
+    toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+    docs <- tm_map(docs, toSpace, "/")
+    docs <- tm_map(docs, toSpace, "@")
+    docs <- tm_map(docs, toSpace, "\\|")
+    
+    # Convertir le texte en minuscule
+    docs <- tm_map(docs, content_transformer(tolower))
+    # Supprimer les nombres
+    docs <- tm_map(docs, removeNumbers)
+    # Supprimer les mots vides anglais
+    docs <- tm_map(docs, removeWords, stopwords("english"))
+    # Supprimer votre propre liste de mots non désirés
+    docs <- tm_map(docs, removeWords, c("dos", "NSP")) 
+    # Supprimer les ponctuations
+    docs <- tm_map(docs, removePunctuation)
+    # Supprimer les espaces vides supplémentaires
+    docs <- tm_map(docs, stripWhitespace)
+    # Text stemming
+    docs <- tm_map(docs, stemDocument)
+    
+    dtm <- TermDocumentMatrix(docs)
+    m <- as.matrix(dtm)
+    v <- sort(rowSums(m),decreasing=TRUE)
+    d <- data.frame(word = names(v),freq=v)
+    
+    wordcloud2(d, color="random-light")
+  })
+  
+  output$bar <- renderPlot({ 
+    
+    docs <- Corpus(VectorSource(data$`Quel est votre but dans la vie ?`))
+    toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+    docs <- tm_map(docs, toSpace, "/")
+    docs <- tm_map(docs, toSpace, "@")
+    docs <- tm_map(docs, toSpace, "\\|")
+    
+    # Convertir le texte en minuscule
+    docs <- tm_map(docs, content_transformer(tolower))
+    # Supprimer les nombres
+    docs <- tm_map(docs, removeNumbers)
+    # Supprimer les mots vides anglais
+    docs <- tm_map(docs, removeWords, stopwords("english"))
+    # Supprimer votre propre liste de mots non désirés
+    docs <- tm_map(docs, removeWords, c("dos", "NSP")) 
+    # Supprimer les ponctuations
+    docs <- tm_map(docs, removePunctuation)
+    # Supprimer les espaces vides supplémentaires
+    docs <- tm_map(docs, stripWhitespace)
+    # Text stemming
+    docs <- tm_map(docs, stemDocument)
+    
+    dtm <- TermDocumentMatrix(docs)
+    m <- as.matrix(dtm)
+    v <- sort(rowSums(m),decreasing=TRUE)
+    d <- data.frame(word = names(v),freq=v)
+    
+    barplot(d[1:10,]$freq, las = 2, names.arg = d[1:10,]$word,
+            col ="lightblue", xlab=d[1:10]$word, main ="Most frequent words",
+            ylab = "Word frequencies")
+  })
  
 }
 
