@@ -1,0 +1,77 @@
+.btn-success {
+    padding: auto;
+	font-size: 15px;
+    height: 70px;
+    min-width: 22%;
+	margin: 5px;
+    text-align: center;
+    color: peru;
+    background: white;
+    text-indent: 4px;
+    vertical-align: middle;
+    border-radius: 5px;
+    border-color: peru;
+}
+
+.btn-success:hover {
+	border-color:#9D0208;
+	background: peru;
+}
+
+body > div.wrapper > header > nav{
+	color: peru
+}
+
+#sidebarCollapsed{
+	background-color: burlyWood;
+	border-right-color: white;
+}
+
+#sidebarItemExpanded > ul > li.active{
+	color: white;
+}
+
+.skin-yellow .sidebar-menu > li.active > a, .skin-yellow .sidebar-menu > li > a {
+     color:white;
+	 font-size: 15px;
+	 margin-right: 2px;
+}
+
+ .skin-yellow .sidebar-menu > li.active > a, .skin-yellow .sidebar-menu > li:hover > a {
+     color:white;
+     background:peru;
+     border-left-color:peru;
+}
+
+ .skin-yellow .main-header .navbar .sidebar-toggle {
+     color:white
+}
+
+ .skin-yellow .main-header .navbar .sidebar-toggle:hover {
+  border-color:#9D0208;
+  background:peru;
+}
+
+.skin-yellow .main-header .navbar {
+     background-color:burlyWood;
+	 border-bottom-color:white;
+}
+
+.skin-yellow .main-header .logo {
+     background-color:burlyWood;
+}
+
+.skin-yellow .main-header .logo:hover {
+  border-color:#9D0208;
+  background:burlyWood;
+}
+
+.content-wrapper, .right-side {
+    background-color: white;
+}
+
+#dl {
+	background-color:white; 
+	border-color: peru;
+	color:peru;
+}
